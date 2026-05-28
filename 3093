@@ -1,0 +1,30 @@
+class Trie:
+    def __init__(self):
+        self.child = {}
+        self.best = -1
+class Solution(object):
+    def stringIndices(self, wordsContainer, wordsQuery):
+        root = Trie()
+        def better(a, b):
+            if a == -1:
+                return b
+            if len(wordsContainer[a]) != len(wordsContainer[b]):
+                return a if len(wordsContainer[a]) < len(wordsContainer[b]) else b
+            return min(a, b)
+        for i, w in enumerate(wordsContainer):
+            node = root
+            node.best = better(node.best, i)
+            for ch in reversed(w):
+                if ch not in node.child:
+                    node.child[ch] = Trie()
+                node = node.child[ch]
+                node.best = better(node.best, i)
+        ans = []
+        for q in wordsQuery:
+            node = root
+            for ch in reversed(q):
+                if ch not in node.child:
+                    break
+                node = node.child[ch]
+            ans.append(node.best)
+        return ans
