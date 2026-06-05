@@ -1,0 +1,38 @@
+class Solution(object):
+    def totalWaviness(self, num1, num2):
+        def f(x):
+            if x <= 0:
+                return 0
+            s = str(x)
+            memo = {}
+            def dp(i, a, b, started, tight):
+                key = (i, a, b, started, tight)
+                if key in memo:
+                    return memo[key]
+                if i == len(s):
+                    return (1, 0) if started else (0, 0)
+                limit = int(s[i]) if tight else 9
+                total_cnt = 0
+                total_wav = 0
+                for d in range(limit + 1):
+                    ntight = tight and (d == limit)
+                    if not started:
+                        if d == 0:
+                            cnt, wav = dp(i + 1, 10, 10, 0, ntight)
+                        else:
+                            cnt, wav = dp(i + 1, 10, d, 1, ntight)
+                    else:
+                        add = 0
+                        if a != 10 and (
+                            (b > a and b > d) or
+                            (b < a and b < d)
+                        ):
+                            add = 1
+                        cnt, wav = dp(i + 1, b, d, 1, ntight)
+                        wav += add * cnt
+                    total_cnt += cnt
+                    total_wav += wav
+                memo[key] = (total_cnt, total_wav)
+                return memo[key]
+            return dp(0, 10, 10, 0, 1)[1]
+        return f(num2) - f(num1 - 1)
