@@ -1,0 +1,57 @@
+class Solution(object):
+    def zigZagArrays(self, n, l, r):
+        """
+        :type n: int
+        :type l: int
+        :type r: int
+        :rtype: int
+        """
+        MOD = 1000000007
+        m = r - l + 1
+        if n == 1:
+            return m
+        sz = 2 * m
+        T = [[0] * sz for _ in range(sz)]
+        for v in range(m):
+            for x in range(v):
+                T[v][m + x] = 1
+            for x in range(v + 1, m):
+                T[m + v][x] = 1
+        def matmul(A, B):
+            C = [[0] * sz for _ in range(sz)]
+            for i in range(sz):
+                Ai = A[i]
+                Ci = C[i]
+                for k in range(sz):
+                    if Ai[k]:
+                        a = Ai[k]
+                        Bk = B[k]
+
+                        for j in range(sz):
+                            if Bk[j]:
+                                Ci[j] = (Ci[j] + a * Bk[j]) % MOD
+            return C
+        def matpow(M, p):
+            R = [[0] * sz for _ in range(sz)]
+            for i in range(sz):
+                R[i][i] = 1
+            while p:
+                if p & 1:
+                    R = matmul(R, M)
+                M = matmul(M, M)
+                p >>= 1
+            return R
+        state = [0] * sz
+        for v in range(m):
+            state[v] = v
+            state[m + v] = m - 1 - v
+        P = matpow(T, n - 2)
+        ans = 0
+        for i in range(sz):
+            row = P[i]
+            cur = 0
+            for j in range(sz):
+                cur = (cur + row[j] * state[j]) % MOD
+            ans = (ans + cur) % MOD
+        return ans
+        
