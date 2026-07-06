@@ -1,0 +1,15 @@
+class Solution(object):
+    def removeCoveredIntervals(self, intervals):
+        """
+        :type intervals: List[List[int]]
+        :rtype: int
+        """
+        intervals.sort(key=lambda x: (x[0], -x[1]))
+        ans = 0
+        maxRight = 0
+        for left, right in intervals:
+            if right > maxRight:
+                ans += 1
+                maxRight = right
+        return ans
+        
