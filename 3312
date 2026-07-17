@@ -1,0 +1,22 @@
+class Solution(object):
+    def gcdValues(self, nums, queries):
+        """
+        :type nums: List[int]
+        :type queries: List[int]
+        :rtype: List[int]
+        """
+        def gcd(a, b):
+            while b:
+                a, b = b, a % b
+            return a
+
+        n = len(nums) 
+        gcdPairs = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                gcdPairs.append(gcd(nums[i], nums[j]))
+        gcdPairs.sort()
+        ans = []
+        for q in queries:
+            ans.append(gcdPairs[q])
+        return ans
