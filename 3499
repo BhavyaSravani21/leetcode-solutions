@@ -1,0 +1,24 @@
+class Solution(object):
+    def maxActiveSectionsAfterTrade(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        ans = 0
+        pre = float("-inf")
+        mx = 0
+        i = 0
+        n = len(s)
+        while i < n:
+            j = i
+            while j < n and s[j] == s[i]:
+                j += 1
+            cur = j - i
+            if s[i] == '1':
+                ans += cur
+            else:
+                if pre + cur > mx:
+                    mx = pre + cur
+                pre = cur
+            i = j
+        return ans + mx
