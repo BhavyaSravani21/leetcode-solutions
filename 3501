@@ -1,0 +1,113 @@
+class Solution(object):
+    def maxActiveSectionsAfterTrade(self, s, queries):
+        """
+        :type s: str
+        :type queries: List[List[int]]
+        :rtype: List[int]
+        """
+        n = len(s)
+        total_ones = s.count('1')
+        
+        # 1. Identify all contiguous blocks of zeros
+        # Format: (start_idx, end_idx, length)
+        zero_blocks = []
+        i = 0
+        while i < n:
+            if s[i] == '0':
+                start = i
+                while i < n and s[i] == '0':
+                    i += 1
+                zero_blocks.append((start, i - 1, i - start))
+            else:
+                i += 1
+                
+        m = len(zero_blocks)
+        if m == 0:
+            return [total_ones] * len(queries)
+            
+        # 2. Precompute adjacent zero-block pair sums into a Sparse Table
+        st = []
+        if m > 1:
+            adj_gains = [0] * (m - 1)
+            for i in range(m - 1):
+                adj_gains[i] = zero_blocks[i][2] + zero_blocks[i+1][2]
+                
+            # Build Sparse Table for O(1) range maximum query
+            k = 0
+            while (1 << k) <= len(adj_gains):
+                k += 1
+            st = [[] for _ in range(k)]
+            st[0] = list(adj_gains)
+            for j in range(1, k):
+                st[j] = [0] * (len(adj_gains) - (1 << j) + 1)
+                for i in range(len(adj_gains) - (1 << j) + 1):
+                    st[j][i] = max(st[j-1][i], st[j-1][i + (1 << (j-1))])
+
+        def query_max(L, R):
+            if L > R or not st:
+                return 0
+            length = R - L + 1
+            j = length.bit_length() - 1
+            return max(st[j][L], st[j][R - (1 << j) + 1])
+
+        ans = []
+        for l, r in queries:
+            # 3. Find the first block that intersects [l, r] (i.e., its end >= l)
+            first_idx = m
+            low, high = 0, m - 1
+            while low <= high:
+                mid = (low + high) // 2
+                if zero_blocks[mid][1] >= l:
+                    first_idx = mid
+                    high = mid - 1
+                else:
+                    low = mid + 1
+                    
+            # 4. Find the last block that intersects [l, r] (i.e., its start <= r)
+            last_idx = -1
+            low, high = 0, m - 1
+            while low <= high:
+                mid = (low + high) // 2
+                if zero_blocks[mid][0] <= r:
+                    last_idx = mid
+                    low = mid + 1
+                else:
+                    high = mid - 1
+                    
+            # Case A: No zero-blocks fall within the query window
+            if first_idx > last_idx:
+                ans.append(total_ones)
+                continue
+                
+            # Helper function to get the clipped length of a block within [l, r]
+            def get_clipped_len(idx):
+                st_b, en_b, _ = zero_blocks[idx]
+                clip_st = st_b if st_b > l else l
+                clip_en = en_b if en_b < r else r
+                return max(0, clip_en - clip_st + 1)
+                
+            best_gain = 0
+            
+            # Case B: Exactly one zero-block intersects the range
+            if first_idx == last_idx:
+                best_gain = 0
+            else:
+                # Case C: Leftmost boundary pair (might be clipped by l)
+                len_first = get_clipped_len(first_idx)
+                len_next = get_clipped_len(first_idx + 1)
+                best_gain = max(best_gain, len_first + len_next)
+                
+                # Case D: Rightmost boundary pair (might be clipped by r)
+                len_last = get_clipped_len(last_idx)
+                len_prev = get_clipped_len(last_idx - 1)
+                best_gain = max(best_gain, len_last + len_prev)
+                
+                # Case E: Completely internal pairs (untouched by boundaries l or r)
+                # These are blocks from index first_idx + 1 up to last_idx - 1
+                # Corresponding adjacent gain indices are from first_idx + 1 to last_idx - 2
+                if first_idx + 1 <= last_idx - 2:
+                    best_gain = max(best_gain, query_max(first_idx + 1, last_idx - 2))
+                    
+            ans.append(total_ones + best_gain)
+            
+        return ans
