@@ -1,0 +1,21 @@
+class Solution(object):
+    def uniqueXorTriplets(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        n = len(nums)
+        if n == 1:
+            return 1
+        MAX = 2048
+        pair = [0] * MAX
+        for i in range(n):
+            x = nums[i]
+            for j in range(i + 1, n):
+                pair[x ^ nums[j]] = 1
+        ans = [0] * MAX
+        for v in range(MAX):
+            if pair[v]:
+                for x in nums:
+                    ans[v ^ x] = 1
+        return sum(ans)
