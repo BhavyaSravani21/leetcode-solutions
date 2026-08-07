@@ -1,0 +1,208 @@
+class Solution(object):
+    def smallestNumber(self, num, t):
+        """
+        :type num: str
+        :type t: int
+        :rtype: str
+        """
+        primes = [2, 3, 5, 7]
+        need = [0, 0, 0, 0]
+
+        for i in range(4):
+            p = primes[i]
+
+            while t % p == 0:
+                t //= p
+                need[i] += 1
+
+        # If another prime factor exists,
+        # no digit product can contain it.
+        if t != 1:
+            return "-1"
+
+        # -----------------------------------------
+        # 2. Factor contribution of each digit
+        # -----------------------------------------
+        f = [
+            [0, 0, 0, 0],  # 0
+            [0, 0, 0, 0],  # 1
+            [1, 0, 0, 0],  # 2
+            [0, 1, 0, 0],  # 3
+            [2, 0, 0, 0],  # 4
+            [0, 0, 1, 0],  # 5
+            [1, 1, 0, 0],  # 6
+            [0, 0, 0, 1],  # 7
+            [3, 0, 0, 0],  # 8
+            [0, 2, 0, 0]   # 9
+        ]
+
+        # -----------------------------------------
+        # 3. DP:
+        # minimum number of digits needed to
+        # produce a given number of 2s and 3s
+        # -----------------------------------------
+        A = need[0]
+        B = need[1]
+        INF = 10 ** 9
+
+        dp = [[INF] * (B + 1) for _ in range(A + 1)]
+        dp[0][0] = 0
+
+        digits = [2, 3, 4, 6, 8, 9]
+
+        for a in range(A + 1):
+            for b in range(B + 1):
+
+                if a == 0 and b == 0:
+                    continue
+
+                best = INF
+
+                for d in digits:
+                    x = f[d][0]
+                    y = f[d][1]
+
+                    if a >= x and b >= y:
+                        best = min(best, dp[a - x][b - y] + 1)
+
+                dp[a][b] = best
+
+        # Minimum digits needed for all four factors
+        def min_needed(a, b, c, d):
+            return dp[a][b] + c + d
+
+        # -----------------------------------------
+        # 4. Build the smallest suffix of EXACT
+        #    given length
+        # -----------------------------------------
+        def build(a, b, c, d, length):
+
+            ans = []
+
+            for pos in range(length):
+
+                left = length - pos - 1
+
+                for digit in range(1, 10):
+
+                    x = f[digit][0]
+                    y = f[digit][1]
+                    z = f[digit][2]
+                    w = f[digit][3]
+
+                    na = max(0, a - x)
+                    nb = max(0, b - y)
+                    nc = max(0, c - z)
+                    nd = max(0, d - w)
+
+                    if min_needed(na, nb, nc, nd) <= left:
+
+                        ans.append(str(digit))
+
+                        a = na
+                        b = nb
+                        c = nc
+                        d = nd
+
+                        break
+
+            return ''.join(ans)
+
+        # -----------------------------------------
+        # 5. Count factors already present in num
+        # -----------------------------------------
+        have = [0, 0, 0, 0]
+
+        for ch in num:
+            digit = ord(ch) - 48
+
+            for j in range(4):
+                have[j] += f[digit][j]
+
+        # -----------------------------------------
+        # 6. If num itself is valid, return it
+        # -----------------------------------------
+        if '0' not in num:
+            if (have[0] >= need[0] and
+                have[1] >= need[1] and
+                have[2] >= need[2] and
+                have[3] >= need[3]):
+
+                return num
+
+        # -----------------------------------------
+        # 7. GREEDY
+        #
+        # Start from RIGHT and try to increase
+        # one digit.
+        # -----------------------------------------
+        cur = have[:]
+
+        # Position of first zero
+        first_zero = len(num)
+
+        for i in range(len(num)):
+            if num[i] == '0':
+                first_zero = i
+                break
+
+        for i in range(len(num) - 1, -1, -1):
+
+            old = ord(num[i]) - 48
+
+            # Remove this digit because it will
+            # be replaced.
+            for j in range(4):
+                cur[j] -= f[old][j]
+
+            # If there is a zero in the prefix,
+            # this position cannot be changed.
+            if i > first_zero:
+                continue
+
+            # Try the smallest larger digit.
+            for new_digit in range(old + 1, 10):
+
+                a = max(0, need[0] - cur[0] - f[new_digit][0])
+                b = max(0, need[1] - cur[1] - f[new_digit][1])
+                c = max(0, need[2] - cur[2] - f[new_digit][2])
+                d = max(0, need[3] - cur[3] - f[new_digit][3])
+
+                remaining = len(num) - i - 1
+
+                # Can remaining positions satisfy
+                # all required factors?
+                if min_needed(a, b, c, d) <= remaining:
+
+                    suffix = build(
+                        a, b, c, d, remaining
+                    )
+
+                    return (
+                        num[:i]
+                        + str(new_digit)
+                        + suffix
+                    )
+
+        # -----------------------------------------
+        # 8. Same length impossible.
+        # Use the smallest possible longer length.
+        # -----------------------------------------
+        required = min_needed(
+            need[0],
+            need[1],
+            need[2],
+            need[3]
+        )
+
+        length = max(len(num) + 1, required)
+
+        suffix = build(
+            need[0],
+            need[1],
+            need[2],
+            need[3],
+            required
+        )
+
+        return '1' * (length - required) + suffix
