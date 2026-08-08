@@ -1,0 +1,61 @@
+class Solution(object):
+    def validSequence(self, word1, word2):
+        """
+        :type word1: str
+        :type word2: str
+        :rtype: List[int]
+        """
+        n = len(word1)
+        m = len(word2)
+
+        if m > n:
+            return []
+
+        # suff[i] = maximum number of characters from
+        # the END of word2 that can be matched in word1[i:]
+        suff = [0] * (n + 1)
+
+        j = m - 1
+
+        for i in range(n - 1, -1, -1):
+            suff[i] = suff[i + 1]
+
+            if j >= 0 and word1[i] == word2[j]:
+                suff[i] += 1
+                j -= 1
+
+        ans = []
+        i = 0
+        j = 0
+        used = False
+
+        while i < n and j < m:
+
+            # Case 1: exact match
+            if word1[i] == word2[j]:
+                ans.append(i)
+                i += 1
+                j += 1
+
+            # Case 2: use the one allowed mismatch
+            elif not used:
+                remaining = m - j - 1
+
+                # After using i as the mismatch,
+                # remaining word2 must be matched exactly.
+                if suff[i + 1] >= remaining:
+                    ans.append(i)
+                    i += 1
+                    j += 1
+                    used = True
+                else:
+                    i += 1
+
+            # Case 3: mismatch already used
+            else:
+                i += 1
+
+        if j == m:
+            return ans
+
+        return []
