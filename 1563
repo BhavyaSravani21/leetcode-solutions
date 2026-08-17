@@ -1,0 +1,70 @@
+class Solution(object):
+    def stoneGameV(self, stoneValue):
+        """
+        :type stoneValue: List[int]
+        :rtype: int
+        """
+        n = len(stoneValue)
+
+        # Prefix sums
+        prefix = [0] * (n + 1)
+
+        for i in range(n):
+            prefix[i + 1] = prefix[i] + stoneValue[i]
+
+        # dp[i][j] = maximum score from i to j
+        dp = [[-1] * n for _ in range(n)]
+
+        def dfs(i, j):
+            if i >= j:
+                return 0
+
+            if dp[i][j] != -1:
+                return dp[i][j]
+
+            ans = 0
+
+            left_sum = 0
+            right_sum = prefix[j + 1] - prefix[i]
+
+            for k in range(i, j):
+
+                left_sum += stoneValue[k]
+                right_sum -= stoneValue[k]
+
+                if left_sum < right_sum:
+
+                    # If even taking the whole left part
+                    # cannot beat ans, skip this split.
+                    if ans >= left_sum * 2:
+                        continue
+
+                    value = left_sum + dfs(i, k)
+
+                    if value > ans:
+                        ans = value
+
+                elif left_sum > right_sum:
+
+                    # Since right_sum will only decrease
+                    # after this point, later splits cannot
+                    # improve the answer if this condition holds.
+                    if ans >= right_sum * 2:
+                        break
+
+                    value = right_sum + dfs(k + 1, j)
+
+                    if value > ans:
+                        ans = value
+
+                else:
+                    # Equal sums: Alice can choose either side.
+                    value1 = left_sum + dfs(i, k)
+                    value2 = right_sum + dfs(k + 1, j)
+
+                    ans = max(ans, value1, value2)
+
+            dp[i][j] = ans
+            return ans
+
+        return dfs(0, n - 1)
