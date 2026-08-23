@@ -1,0 +1,26 @@
+class Solution(object):
+    def sumGame(self, num):
+        """
+        :type num: str
+        :rtype: bool
+        """
+        n = len(num)
+        half = n // 2
+        left = 0
+        right = 0
+        lq = 0
+        rq = 0
+        for i in range(half):
+            if num[i] == '?':
+                lq += 1
+            else:
+                left += int(num[i])
+        for i in range(half, n):
+            if num[i] == '?':
+                rq += 1
+            else:
+                right += int(num[i])
+        diff = left - right
+        if diff * 2 == (rq - lq) * 9:
+            return False
+        return True 
